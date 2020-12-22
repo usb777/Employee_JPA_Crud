@@ -1,11 +1,20 @@
 package com.sollers.controller;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +22,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
@@ -21,6 +32,8 @@ import com.sollers.model.Employee;
 
 import com.sollers.service.EmployeeService;
 
+
+
 @RestController
 public class EmployeeController 
 {
@@ -28,6 +41,9 @@ public class EmployeeController
 	
 	 @Autowired
 	    private EmployeeService employeeService;
+	 
+	 @Autowired
+	 RestTemplate restTemplate; 
 
 	 /*
 	 @GetMapping("/employees")
@@ -50,6 +66,21 @@ public class EmployeeController
 	    
 	  
 	    
+	    
+	    @GetMapping(value = "/amazon/employees")
+	    private String getEmployeesRT()
+	    {
+	    		       
+	    	HttpHeaders headers = new HttpHeaders();
+	    	headers.add("X-version", "v1");
+	    	headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+	    	HttpEntity<String> entity = new HttpEntity<String>(headers);
+	    	
+	    	return restTemplate.exchange("http://localhost:8080/employees",HttpMethod.GET,entity,String.class).getBody();
+	    	
+	    }
+	        
+	    
 
 	    @GetMapping("/employees/{id}")
 	    public ResponseEntity < Employee > getEmployeeById(@PathVariable int id) throws RecordNotFoundException 
@@ -57,21 +88,6 @@ public class EmployeeController
 	        return ResponseEntity.ok().body(employeeService.getEmployeeByID(id));
 	    }
 	    
-	    
-	    //get Employee by id through RestTemplate
-	    
-	    private static void getEmployeeById()
-	    {
-	        final String uri = "http://localhost:8080/employees/{id}";
-	        RestTemplate restTemplate = new RestTemplate();
-	         
-	        Map<String, String> params = new HashMap<String, String>();
-	        params.put("id", "1");
-	         
-	        Employee emp = restTemplate.getForObject(uri, Employee.class, params);
-	         
-	        //Use the result
-	    }
 	    
 	    
 	    
@@ -90,20 +106,20 @@ public class EmployeeController
 	    }
 	    
 	    
-	    //update Employee through RestTemplate
 	    
-	    private static void updateEmployee()
-	    {
-	        final String uri = "http://localhost:8080/employees/{id}";
-	        RestTemplate restTemplate = new RestTemplate();
-	         
-	        Map<String, String> params = new HashMap<String, String>();
-	        params.put("id", "2");
+	    @RequestMapping(value = "/amazon/employees/{id}", method = RequestMethod.PUT)
+	    public String updateProduct(@PathVariable("id") String id, @RequestBody Employee employee) {
+	       HttpHeaders headers = new HttpHeaders();
+	       headers.setAccept(Arrays.asList(MediaType.APPLICATION_JSON));
+	       HttpEntity<Employee> entity = new HttpEntity<Employee>(employee,headers);
 	       
-	        Employee updatedEmployee = new Employee(2, "James", "Gosling",1993, true, 3);
-	         
-	        restTemplate.put ( uri, updatedEmployee, params );
+	       return restTemplate.exchange("http://localhost:8080/employees/"+id, HttpMethod.PUT, entity, String.class).getBody();
 	    }
+	    
+	    
+	    
+	    
+	  
 	    
 	    
 	    
@@ -117,6 +133,9 @@ public class EmployeeController
 	        this.employeeService.deleteEmployee(id);
 	        return HttpStatus.OK;
 	    }
+	    
+	      
+	    	    
 	    
 	    @DeleteMapping("/employees")
 	    public HttpStatus deleteAllEmployees() 
